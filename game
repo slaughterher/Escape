@@ -1,0 +1,383 @@
+import sys
+import time
+import os
+
+# COLOR
+BLUE = "\033[94m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
+
+def check_wellness():
+    global wellness
+    if wellness > 20:
+        wellness = 20
+    if wellness <= 0:
+        print(RED + "Game Over! You have died." + RESET)
+        sys.exit()
+
+user_name = input("What should we call you? ")
+print(GREEN + "Welcome in, " + user_name + RESET)
+print(BLUE + "You are an enslaved person of color. You are mistreated, overworked, and separated from your father." + RESET)
+
+wellness = 20
+check_wellness()
+
+# START
+while True:
+    gamestart = input("Do you dare try to escape? (yes = a/no = b) /res to quit: ")
+    if gamestart == "/res":
+        sys.exit()
+    if gamestart == "b":
+        print(RED + "You don't escape." + RESET)
+        sys.exit()
+    elif gamestart == "a":
+        print(GREEN + "Excellent!" + RESET)
+        print(YELLOW + "Wellness = " + str(wellness) + RESET)
+        break
+    else:
+        print(RED + "Please answer with a provided option." + RESET)
+
+print(BLUE + "You know your 'owners' are traveling away for the winter to visit family. You could take this chance to escape. You, however, are unprepared for the harsh weather." + RESET)
+print(BLUE + "You also know your chances of surviving the trip are higher in the summer seasons. Your 'owners', however, will notice you are missing and send cops or bounty hunters to search for you." + RESET)
+
+# SEASON
+winter = False
+summer = False
+jacket = False
+while True:
+    season = input("Do you escape during the summer (a) or winter (b)? /res to quit: ")
+    if season == "/res":
+        sys.exit()
+    if season == "a":
+        print(BLUE + "You decide to leave during the summer. This way, you won't have to worry about cold weather." + RESET)
+        winter = False
+        summer = True
+        break
+    elif season == "b":
+        print(BLUE + "You decide to leave during the winter." + RESET)
+        print(BLUE + "The night sky greets you as you begin your journey..." + RESET)
+        winter = True
+        summer = False
+        break
+    else:
+        print(RED + "Please answer with a provided option." + RESET)
+
+# CLOTHES
+if winter:
+    while True:
+        clothes = input("Do you steal clothes from the housemaid's basket (a), the sleeping man (b), or continue without stealing (c)? /res to quit: ")
+        if clothes == "/res":
+            sys.exit()
+        if clothes == "a":
+            print(GREEN + "You snatch a jacket from the basket and avoid detection." + RESET)
+            jacket = True
+            break
+        elif clothes == "b":
+            print(RED + "The man wakes up and catches you. He returns you to your 'owners'." + RESET)
+            print(RED + "You fail!" + RESET)
+            jacket = False
+            sys.exit()
+        elif clothes == "c":
+            wellness -= 5
+            jacket = False
+            check_wellness()
+            print(RED + "-5 wellness." + RESET)
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            print(BLUE + "You continue without clothes and endure the cold. You will continue to lose wellness until you reach shelter." + RESET)
+            break
+        else:
+            print(RED + "Please answer with a provided option." + RESET)
+
+print(BLUE + "You reach a forest with tall grass and a small cabin in the distance. It seems abandoned." + RESET)
+
+# REST
+grass = False
+cabin = False
+while True:
+    rest = input("Do you sleep in the grass (a) or the cabin (b)? /res to quit: ")
+    if rest == "/res":
+        sys.exit()
+    if rest == "a":
+        grass = True
+        break
+    elif rest == "b":
+        print(BLUE + "You approach the cabin and knock on the door." + RESET)
+        print(BLUE + "A young white man opens it and looks at you. He looks at you. 'What are you doing here?' The man asks you." + RESET)
+        speak = input("Do you ask him for help (a) or apologize and leave (b)? /res to quit: ")
+        if speak == "/res":
+            sys.exit()
+        if speak == "a":
+            print(BLUE + "'I need your help. Please.' You say to the man. He tilts his head at you. 'No need to worry, I'm a friend with friends.' He opens the door for you to enter. 'Do you know what that means?' he asks as he grabs a small loaf of bread and hands it to you. " + RESET)
+            print(GREEN + "+4 wellness" + RESET)
+            if jacket == False:
+                if summer == False:
+                    print(GREEN + "You have found shelter! You are no longer cold." + RESET)
+                    wellness += 3
+                    print(GREEN + "+3 wellness" + RESET)
+                    print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            time.sleep(4)
+            print(BLUE + "'It means I'm here to help. You'll do good to remember that,' he says. 'You can stay a night, but you'll need to leave soon after.' You nod in understanding and thank him. You stay in a warm bed tonight." + RESET)
+            print(BLUE + "You awake. The man sends you off after a small breakfast and you continue your journey." + RESET)
+            grass = False
+            cabin = True
+            check_wellness()
+            break
+        elif speak == "b":
+            print(BLUE + "'I'm sorry for the bother, sir.' You say, walking briskly away. You sleep in the grass field." + RESET)
+            grass = True
+            cabin = False
+            break
+        else:
+            print(RED + "Please answer with a provided option." + RESET)
+            continue
+    else:
+        print(RED + "Please answer with a provided option." + RESET)
+
+# GRASS
+if grass:
+    print(BLUE + "You sleep in the grass." + RESET)
+    if winter:
+        if jacket:
+            print(BLUE + "Your jacket helps keep you warm, thankfully." + RESET)
+        else:
+            print(BLUE + "Without a jacket, its extremely cold outside. " + RESET)
+            print(RED + "-5 wellness. " + RESET)
+            wellness = wellness - 5
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+    if summer:
+        print(BLUE + "Suddenly, you are startled by distant footsteps and a flashlight in the dark..." + RESET)
+        print(BLUE + "Its an officer and searchdog!" + RESET)
+
+        # SEARCHDOG
+        while True:
+            searchdog = input("Do you cover yourself in mud to hide your scent from the dog (a), try to discreetly move away from the both of them through the grass (b), or try speak with the officer (c)? /res to quit: ")
+            if searchdog == "/res":
+                sys.exit()
+            if searchdog == "a":
+                # MUD
+                print(BLUE + "You look around and notice a small patch of mud and plants. In a fit of desperation but clarity, you scoop it up onto your skin and clothes quickly, before planting yourself back hidden in the grass." + RESET)
+                while True:
+                    giveup = input("The dog and officer move closer. Do you surrender? Yes (a)/no (b) /res to quit: ")
+                    if giveup == "/res":
+                        sys.exit()
+                    if giveup == "a":
+                        print(RED + "You panic and raise your hands before slowly standing up. The dog barks at you aggressively and the police pulls a piece of paper from his coat. Its a wanted poster. He takes you back to your 'owners'." + RESET)
+                        print(RED + "Game over! You have been caught." + RESET)
+                        sys.exit()
+                    elif giveup == "b":
+                        print(GREEN + "You hold your breath and close your eyes, you believe in your solution. Just as the dog's paws are crunching sticks nearer to you, he returns to his officer. Some muttering from him is heard, and after a few minutes you can't see or hear anything else. Good job!" + RESET)
+                        break
+                    else:
+                        print(RED + "Please answer with a provided option." + RESET)
+                break
+            elif searchdog == "b":
+                # HIDE
+                print(BLUE + "You keep your body as low in the grass as possible, shuffling along the floor as you hear them move closer. The dog begins to bark and loud footsteps are heard trudging towards you." + RESET)
+                if summer:
+                    print(BLUE + "As you crawl, you scrape your hands and legs on rough wood and rocks." + RESET)
+                    print(RED + "-3 wellness. " + RESET)
+                    wellness = wellness - 3
+                    print(YELLOW + "Wellness = " + str(wellness) + RESET)
+                    check_wellness()
+                while True:
+                    cop = input("Do you stay still (a) or try to attack? (b) /res to quit: ")
+                    if cop == "/res":
+                        sys.exit()
+                    if cop == "a":
+                        print(BLUE + "You hold your breath and await the notice of the officer or dog, but suddenly a loud bang is heard. Not a gunshot, but two surfaces colliding. When you risk peeking your head up, you see the door to the cabin nearby slam open." + RESET)
+                        if cabin:
+                            print(BLUE + "The man who helped you comes outside. 'Is there an issue, officer?' He asks, approaching the two and glancing at you discreetly. You take the chance to move furthur away. Once you can't make out their words, you break into a sprint." + RESET)
+                        else:
+                            print(BLUE + "A white man exits the cabin and approaches the officer and dog. 'Is there an issue, officer?' He asks, approaching the two. Then, he sees you in the grass." + RESET)
+                            print(BLUE + "'There's no need to worry, sir,' the cop replies, 'I'm just clearing the area of escapees. They've been on the rise.' The man from the cabin nods." + RESET)
+                            print(BLUE + "'Yes, well, I live alone out here and I can assure you there's nobody around for a while. I'm a friend with friends, I would know.' At that phrase, the man makes eye contact with you. A friend with friends... that sounds like some kind of code. You should probably remember that." + RESET)
+                            print(BLUE + "You take the chance to move furthur away. Once you can't make out their words, you break into a sprint." + RESET)
+                        break
+                    elif cop == "b":
+                        print(BLUE + "You lunge at the officer as he gets closer to you. You seem to catch him by surprise and seemingly have the upper hand. That is, until the dog bites your back and drags you down. The officer shoots you." + RESET)
+                        wellness = wellness - 20
+                        check_wellness()
+                        break
+                    else:
+                        print(RED + "Please answer with a provided option." + RESET)
+                break
+            elif searchdog == "c":
+                # SPEAK
+                print(BLUE + "You stand up calmly. The officer calls out to you, raising his flashlight. You duck behind a tree and ponder your response." + RESET)
+                print(BLUE + "'Who's out there? Answer me now!' He calls" + RESET)
+                while True:
+                    lie1 = input("Do you pretend to be a free black person (a) or pretend to be a white person (b)? /res to quit: ")
+                    if lie1 == "/res":
+                        sys.exit()
+                    if lie1 == "a":
+                        print(BLUE + "You step aside from the tree and raise your hands. 'Everything is alright, sir. I'm just taking a walk here. Is something the matter?' You ask, calming yourself enough to steady your voice. The officer squints at you." + RESET)
+                        print(BLUE + "'Have I seen you around here before? You look familiar...'" + RESET)
+                        while True:
+                            lie2 = input("'Yes, I live around here.' (a) 'No, I don't think so.' (b) /res to quit: ")
+                            if lie2 == "/res":
+                                sys.exit()
+                            if lie2 == "a":
+                                print(BLUE + "The officer nods once. 'Yes, that sounds right. You're free, aren't you?' He calls." + RESET)
+                                print(BLUE + "You hum, 'Yes sir, I am.' The officer wishes you goodnight. " + RESET)
+                                break
+                            elif lie2 == "b":
+                                print(BLUE + "You hum in fake-thought, 'nope, I've never seen you in my life, sir.' You look at him. The officer tilts his head." + RESET)
+                                print(BLUE + "'Then where the hell have I seen you before? I know I have,' a flicker of recognition crosses his face, 'ah, you're " + user_name + ", there's a search out for you. You're under arrest.'" + RESET)
+                                print(RED + "Game over! You have been caught." + RESET)
+                                sys.exit()
+                            else:
+                                print(RED + "Please answer with a provided option." + RESET)
+                        break
+                    elif lie1 == "b":
+                        print(BLUE + "You stay hidden behind the tree. 'I'm just taking a stroll, officer. No cause for concern now.' You hear the cop hum in thought." + RESET)
+                        print(BLUE + "'Now, I'm patrolling these parts for some escapees. You see any?' He steps closer." + RESET)
+                        print(BLUE + "You sweat, 'No, sir, I haven't.' But before you can get another word out, the officer clangs something hard against your head, you're unconscious. " + RESET)
+                        print(RED + "Game over! You have been caught." + RESET)
+                        sys.exit()
+                    else:
+                        print(RED + "Please answer with a provided option." + RESET)
+                break
+            else:
+                print(RED + "Please answer with a provided option." + RESET)
+
+# NAVIGATION
+if winter:
+    print(BLUE + "You know you need to get north, but you seem to have gotten lost. You look to the bright stars in the night sky." + RESET)
+    while True:
+        stars = input("Do you follow the constellation Cassiopeia (a) or Canis Major (b)? /res to quit: ")
+        if stars == "/res":
+            sys.exit()
+        print(RESET + "Writer's note: Technically these 2 constellations are not visible at the same time. Let's pretend.")
+        if stars == "a":
+            print("You decide to follow Cassiopeia, easily recognizable due to its 'W' shape. You know this constellation typically follows the north star.")
+            print("You are correct! You find yourself going the correct direction once you see a compass on a farmhouse. You're almost free!")
+            break
+        elif stars == "b":
+            print(BLUE + "You follow Canis Major, the constellation containing 'Sirius', the brightest star in the night sky except for the sun." + RESET)
+            print("Unfortunately, this constellation typically point south. By the time you remember that, you've already travelled miles in the wrong direction You are exhausted." + RESET)
+            print(RED + "-3 wellness. " + RESET)
+            wellness = wellness - 3
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+            break
+        else:
+            print(RED + "Please answer with a provided option." + RESET)
+
+    if jacket == False:
+        print("You are cold without a jacket.")
+        print(RED + "-3 wellness. " + RESET)
+        wellness = wellness - 3
+        print(YELLOW + "Wellness = " + str(wellness) + RESET)
+        check_wellness()
+elif summer:
+    print("You know you need to get north, but you seem to have gotten lost. You look to the growing moss along trees around you.")
+    moss = input("Do you walk with the moss (a) or away from it's growing direction (b)? /res to quit: ")
+    if moss == "/res":
+        sys.exit()
+    print(RESET + "Writer's note: Technically moss grows on any side of a tree, but in certain climates in the northern hemisphere it does follow a certain direction. Let's pretend.")
+    if moss == "a":
+        print("You decide to walk in the direction which the moss grows along the trees. You remember this tends to be... North?")
+        print("You are correct! You find yourself going the correct direction once you see a compass on a farmhouse. You're almost free!")
+    elif moss == "b":
+        print("You decide to walk away from the direction which the moss grows along the trees. You remember this tends to be... South?")
+        print("Unfortunately, this is wrong. Moss typically grows on the North side of a tree. By the time you remember that, you've already traveled miles in the wrong direction You are exhausted." + RESET)
+        print(RED + "-3 wellness. " + RESET)
+        wellness = wellness - 3
+        print(YELLOW + "Wellness = " + str(wellness) + RESET)
+        check_wellness()
+else:
+     sys.exit()
+
+# FOOD
+if summer:
+    print(BLUE + "You're closer to escape than you are confinement, but you've used the last of your food stash. You see some small yellow flowers nearby, and a bush full of plump yellow berries. You can't recognize either." + RESET)
+    while True:
+        food = input("Do you eat the flowers (a) or the berries (b)? /res to quit: ")
+        if food == "/res":
+            sys.exit()
+        if food == "a":
+            print(BLUE + "You pick some of the yellow flowers, examining them before biting the head off of one. Good work! They were dandelions--a flower safe to consume." + RESET)
+            print(GREEN + "+3 wellness. " + RESET)
+            wellness = wellness + 3
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+            break
+        elif food == "b":
+            print(BLUE + "You settle on the berries. As you collect them in your hands and try one, you recognize the bitter taste. They were, in fact, American Bittersweets. A poisonous and invasive plant.")
+            print(RED + "-5 wellness. " + RESET)
+            wellness = wellness - 5
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+            break
+        else:
+            print(RED + "Please answer with a provided option." + RESET)
+
+# INJURY
+if winter:
+    print(BLUE + "You're closer to escape than you are confinement, but you've just tripped and gotten a harsh wound on your arm. It doesn't look dirty, but you worry. You see a small creek with clear water and a tree with large leaves." + RESET)
+    while True:
+        injury = input("Do you wash the wound with the water (a) or wrap it dry with the leaves (b)? /res to quit: ")
+        if injury == "/res":
+            sys.exit()
+        if injury == "a":
+            print(BLUE + "You decide to try to wash your wound. You take the cold water and splash it gently, hissing at the pain. Everything seems fine until a few days later. Your wound is infected.")
+            print(RED + "-4 wellness. " + RESET)
+            wellness = wellness - 4
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+            break
+        elif injury == "b":
+            print(BLUE + "You settle on wrapping the wound dry. Better not to risk infection from dirty water. The leaves bend around your arm and you tie it with twine." + RESET)
+            print(GREEN + "+4 wellness. " + RESET)
+            wellness = wellness + 4
+            print(YELLOW + "Wellness = " + str(wellness) + RESET)
+            check_wellness()
+            break
+        else:
+            print(RED + "Please answer with a provided option." + RESET)
+
+os.system("cls" if os.name == "nt" else "clear")
+print(BLUE + "You know your journey is coming to an end, you feel the hope in your chest as you near the border to Kansas--a newly anti-slave state. You suddenly hear dogs barking and some muttering. Its searchdogs and cops!")
+print("You run desperately, seeing a black woman running into a house before slamming the door. She must be hiding too. You can only hope she'll let you in.")
+print("As you run to the door and knock quickly, you're met by silence. 'Please let me in!' You call, 'I'm trying to hide as well!' But you get no response. Then, you remember that passcode you heard..." + RESET)
+print(YELLOW + 'Trust me! I...' + RESET)
+# CODE
+failure = True
+while True:
+    codetest = input("'I'm a friend of a friend!' (a) 'I'm friends with your friends!' (b) 'I'm a friend with friends!' (c) /res to quit: ")
+    if codetest == "/res":
+        sys.exit()
+    if codetest == "a":
+        print(RED + "The door stays shut..." + RESET)
+        failure = True
+        break
+    elif codetest == "b":
+        print(RED + "The door stays shut..." + RESET)
+        failure = True
+        break
+    elif codetest == "c":
+        print(GREEN + "You remember what the man from the cabin said to you as the woman briskly opens the door and ushers you inside." + RESET)
+        failure = False
+        break
+    else:
+        print(RED + "Please answer with a provided option." + RESET)
+
+if failure:
+    # WRONG ANSWER
+    print(BLUE + "You have no choice but to keep running on foot. You break into a sprint, hearing a harsh bark behind you and shouting. But are you strong enough to make it?" + RESET)
+    print(RED + "-6 wellness." + RESET)
+    wellness = wellness - 6
+    print(YELLOW + "Wellness = " + str(wellness) + RESET)
+    check_wellness()
+    print(BLUE + "You push through exhaustion and finally lose the dogs and cops. You stumble, breathing heavy. You know you've come so far--too far to give up now. As you keep pushing forward, you see the roadmarker to Kansas State. You hide from the roadview, crawling through trees and scampering behind buildings. You don't attract any more attention and make it to the other side with ease." + RESET)
+    print(YELLOW + "Wellness = " + str(wellness) + RESET)
+    print(GREEN + "Congratulations! You have made it to the free states. Play again?" + RESET)
+    sys.exit()
+else:    
+    print(BLUE + "The woman whispers, 'Get in quickly!' You slip inside with several other people of color. You all are placed into a basement as an old white woman places a rug on top of the entryway. You are not caught. As you converse with these people in safety, they offer to help you reach the final stretch of escape." + RESET)
+    print(BLUE + "The people pack into a wagon, They say they plan on using a backcountry trail to bring the group to safety. The trip is a few days, but feels so short with the fear of getting caught and the warmth of community. Even warmer, in fact, when you safely make it to Kansas." + RESET)
+    print(YELLOW + "Wellness = " + str(wellness) + RESET)
+    print(GREEN + "Congratulations! You have made it to the free states. Play again?" + RESET)
