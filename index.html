@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape — A Historical Adventure</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#d6c9a8;font-family:'IM Fell English',Georgia,serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 4rem}
+header{text-align:center;margin-bottom:2rem;position:relative;width:100%;max-width:720px}
+header h1{font-family:'IM Fell English SC',Georgia,serif;font-size:2.4rem;letter-spacing:.12em;color:#e8d9b0;text-shadow:0 0 18px rgba(220,190,100,.35)}
+header p{font-size:.9rem;color:#7a6e58;margin-top:.3rem;letter-spacing:.06em}
+.container{width:100%;max-width:720px;display:flex;flex-direction:column;gap:1.2rem}
+.wellness-bar{background:#1a1a1a;border:1px solid #3a3228;border-radius:8px;padding:.6rem 1rem;display:flex;align-items:center;gap:.8rem;font-size:.85rem;color:#9a8f76}
+.bar-track{flex:1;height:8px;background:#2a2520;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-fill.high{background:#4caf50}
+.bar-fill.mid{background:#ff9800}
+.bar-fill.low{background:#f44336}
+.story-log{background:#111;border:1px solid #2e2820;border-radius:10px;padding:1.4rem;max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem}
+.msg{font-size:.95rem}
+.prompt-box{background:#15130f;border:1px solid #3d3528;border-radius:10px;padding:1.4rem}
+.prompt-text{margin-bottom:1rem}
+.choice-button{background:#1e1a14;border:1px solid #4a4030;border-radius:7px;color:#d6c9a8;font-family:'IM Fell English',Georgia,serif;padding:.7rem;cursor:pointer}
+.choice-button:hover{background:#2e2618}
+input{width:100%;padding:.7rem;background:#1a1610;border:1px solid #4a4030;color:#e8d9b0}
+button{margin-top:.5rem;padding:.6rem 1rem;background:#3d2e14;border:1px solid #7a5e2a;color:#e8d9b0;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Escape</h1>
+<p>An Underground Railroad Story</p>
+</header>
+
+<div class="container">
+<div class="wellness-bar">
+<span>Wellness</span>
+<div class="bar-track"><div id="bar" class="bar-fill high" style="width:100%"></div></div>
+<span id="wellnessText">20 / 20</span>
+</div>
+
+<div class="story-log" id="log"></div>
+
+<div class="prompt-box" id="promptBox"></div>
+</div>
+
+<script>
+let wellness=20
+let name=""
+let step="name"
+
+const log=document.getElementById("log")
+const promptBox=document.getElementById("promptBox")
+
+function updateBar(){
+let pct=(wellness/20)*100
+let bar=document.getElementById("bar")
+bar.style.width=pct+"%"
+bar.className="bar-fill "+(wellness>12?"high":wellness>6?"mid":"low")
+document.getElementById("wellnessText").textContent=wellness+" / 20"
+}
+
+function addMessage(text){
+let div=document.createElement("div")
+div.className="msg"
+div.textContent=text
+log.appendChild(div)
+log.scrollTop=log.scrollHeight
+}
+
+function render(){
+promptBox.innerHTML=""
+
+if(step==="name"){
+promptBox.innerHTML=`
+<div class="prompt-text">What should we call you?</div>
+<input id="nameInput" placeholder="Enter your name...">
+<button onclick="startGame()">Begin</button>`
+return
+}
+
+if(step==="start"){
+promptBox.innerHTML=`
+<div class="prompt-text">You're hiding in the woods. Footsteps approach.</div>
+<button class="choice-button" onclick="choice('hide')">Hide</button>
+<button class="choice-button" onclick="choice('run')">Run</button>`
+return
+}
+
+if(step==="end"){
+promptBox.innerHTML=`<div class="prompt-text">Game Over</div>
+<button onclick="restart()">Restart</button>`
+}
+}
+
+function startGame(){
+name=document.getElementById("nameInput").value||"Player"
+addMessage(name+" enters the night.")
+step="start"
+render()
+}
+
+function choice(c){
+if(step==="start"){
+if(c==="hide"){
+addMessage("You stay hidden. The danger passes.")
+wellness+=0
+}else{
+addMessage("You run and trip. You lose energy.")
+wellness-=5
+}
+step="end"
+}
+updateBar()
+render()
+}
+
+function restart(){
+wellness=20
+log.innerHTML=""
+step="name"
+updateBar()
+render()
+}
+
+updateBar()
+render()
+</script>
+
+</body>
+</html>
