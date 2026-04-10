@@ -1,0 +1,523 @@
+import os
+import secrets
+from flask import Flask, session, request, render_template
+
+app = Flask(__name__)
+app.secret_key = secrets.token_hex(32)
+
+
+def clamp_wellness(w):
+    return max(0, min(20, w))
+
+
+def is_dead(wellness, messages):
+    if wellness <= 0:
+        messages.append(('red', 'Game Over! You have died.'))
+        return True
+    return False
+
+
+@app.route('/', methods=['GET'])
+def index():
+    session.clear()
+    return render_template('game.html',
+        step='name',
+        messages=[],
+        prompt='What should we call you?',
+        input_type='text',
+        choices=None,
+        wellness=20,
+        game_over=False,
+        win=False
+    )
+
+
+@app.route('/exit')
+def exit_game():
+    session.clear()
+    return render_template('game.html',
+        step='name',
+        messages=[],
+        prompt='What should we call you?',
+        input_type='text',
+        choices=None,
+        wellness=20,
+        game_over=False,
+        win=False
+    )
+
+
+@app.route('/play', methods=['POST'])
+def play():
+    step = session.get('step', 'name')
+    inp = request.form.get('input', '').strip()
+
+    messages  = session.get('messages', [])
+    wellness  = session.get('wellness', 20)
+    winter    = session.get('winter', False)
+    summer    = session.get('summer', False)
+    jacket    = session.get('jacket', False)
+    cabin     = session.get('cabin', False)
+    name      = session.get('name', '')
+
+    new_msgs  = []
+    game_over = False
+    win       = False
+    next_step = step
+    prompt    = ''
+    choices   = None
+
+    def nav_winter_state():
+        return ('navigation_winter',
+                'You know you need to get north, but you have gotten lost. You look to the bright stars in the night sky. Which constellation do you follow?',
+                [('a', 'Cassiopeia'), ('b', 'Canis Major')])
+
+    def nav_summer_state():
+        return ('navigation_summer',
+                'You know you need to get north, but you have gotten lost. You look at the growing moss along the trees. Which direction do you walk?',
+                [('a', 'Walk with the moss'), ('b', "Walk away from the moss's growing direction")])
+
+    def code_preamble():
+        return [
+            ('blue', "You know your journey is coming to an end. You feel hope in your chest as you near the border to Kansas — a newly anti-slave state. You suddenly hear dogs barking and muttering. It's search dogs and cops!"),
+            ('blue', "You run desperately, seeing a Black woman running into a house before slamming the door. She must be hiding too."),
+            ('blue', "As you run to the door and knock quickly, you're met by silence. 'Please let me in!' you call, 'I'm trying to hide as well!' But you get no response. Then, you remember that passcode you heard..."),
+            ('yellow', "Trust me! I...")
+        ]
+
+    def code_choices():
+        return [
+            ('a', "I'm a friend of a friend!"),
+            ('b', "I'm friends with your friends!"),
+            ('c', "I'm a friend with friends!")
+        ]
+
+    #    NAME                                                                   
+    if step == 'name':
+        name = inp
+        session['name'] = name
+        new_msgs = [
+            ('green',  f'Welcome in, {name}'),
+            ('blue',   "You are an enslaved person of color. You are mistreated, overworked, and separated from your father."),
+        ]
+        next_step = 'start'
+        prompt    = 'Do you dare try to escape?'
+        choices   = [('a', 'Yes, I dare.'), ('b', 'No.')]
+
+    #    START                                                                  
+    elif step == 'start':
+        if inp == 'a':
+            new_msgs = [
+                ('green',  'Excellent!'),
+                ('blue',   "You know your 'owners' are traveling away for the winter to visit family. You could take this chance to escape. You, however, are unprepared for the harsh weather."),
+                ('blue',   "You also know your chances of surviving the trip are higher in the summer seasons. Your 'owners', however, will notice you are missing and send cops or bounty hunters to search for you."),
+            ]
+            next_step = 'season'
+            prompt    = 'Do you escape during the summer or winter?'
+            choices   = [('a', 'Summer'), ('b', 'Winter')]
+        elif inp == 'b':
+            new_msgs  = [('red', "You don't escape.")]
+            game_over = True
+            next_step = 'end'
+
+    #    SEASON                                                                 
+    elif step == 'season':
+        if inp == 'a':
+            summer, winter = True, False
+            session['summer'], session['winter'] = True, False
+            new_msgs  = [('blue', "You decide to leave during the summer. This way, you won't have to worry about cold weather.")]
+            next_step = 'rest'
+            prompt    = 'You reach a forest with tall grass and a small cabin in the distance. It seems abandoned. Where do you rest?'
+            choices   = [('a', 'Sleep in the grass'), ('b', 'Approach the cabin')]
+        elif inp == 'b':
+            winter, summer = True, False
+            session['winter'], session['summer'] = True, False
+            new_msgs  = [
+                ('blue', "You decide to leave during the winter."),
+                ('blue', "The night sky greets you as you begin your journey...")
+            ]
+            next_step = 'clothes'
+            prompt    = 'You need to stay warm. What do you do?'
+            choices   = [
+                ('a', "Steal a jacket from the housemaid's basket"),
+                ('b', 'Steal clothes from the sleeping man'),
+                ('c', 'Continue without stealing')
+            ]
+
+    #    CLOTHES                                                                
+    elif step == 'clothes':
+        if inp == 'a':
+            jacket = True
+            session['jacket'] = True
+            new_msgs  = [('green', 'You snatch a jacket from the basket and avoid detection.')]
+            next_step = 'rest'
+            prompt    = 'You reach a forest with tall grass and a small cabin in the distance. It seems abandoned. Where do you rest?'
+            choices   = [('a', 'Sleep in the grass'), ('b', 'Approach the cabin')]
+        elif inp == 'b':
+            new_msgs  = [('red', "The man wakes up and catches you. He returns you to your 'owners'."), ('red', "You fail!")]
+            game_over = True
+            next_step = 'end'
+        elif inp == 'c':
+            wellness = clamp_wellness(wellness - 5)
+            session['jacket'] = False
+            new_msgs  = [
+                ('red', '-5 wellness.'),
+                ('blue', "You continue without clothes and endure the cold. You will continue to lose wellness until you reach shelter.")
+            ]
+            if is_dead(wellness, new_msgs):
+                game_over = True
+                next_step = 'end'
+            else:
+                next_step = 'rest'
+                prompt    = 'You reach a forest with tall grass and a small cabin in the distance. It seems abandoned. Where do you rest?'
+                choices   = [('a', 'Sleep in the grass'), ('b', 'Approach the cabin')]
+
+    #    REST                                                                   
+    elif step == 'rest':
+        if inp == 'a':
+            session['grass'] = True
+            session['cabin'] = False
+            if summer:
+                new_msgs  = [
+                    ('blue', "You sleep in the grass."),
+                    ('blue', "Suddenly, you are startled by distant footsteps and a flashlight in the dark..."),
+                    ('blue', "It's an officer and search dog!")
+                ]
+                next_step = 'searchdog'
+                prompt    = 'What do you do?'
+                choices   = [
+                    ('a', 'Cover yourself in mud to hide your scent from the dog'),
+                    ('b', 'Discreetly move away through the grass'),
+                    ('c', 'Try to speak with the officer')
+                ]
+            else:
+                new_msgs = [('blue', "You sleep in the grass.")]
+                if jacket:
+                    new_msgs.append(('blue', "Your jacket helps keep you warm, thankfully."))
+                else:
+                    wellness = clamp_wellness(wellness - 5)
+                    new_msgs += [('blue', "Without a jacket, it's extremely cold outside."), ('red', '-5 wellness.')]
+                if is_dead(wellness, new_msgs):
+                    game_over = True
+                    next_step = 'end'
+                else:
+                    next_step, prompt, choices = nav_winter_state()
+
+        elif inp == 'b':
+            new_msgs  = [
+                ('blue', "You approach the cabin and knock on the door."),
+                ('blue', "A young white man opens it and looks at you. 'What are you doing here?' The man asks you.")
+            ]
+            next_step = 'speak'
+            prompt    = 'What do you say?'
+            choices   = [('a', 'Ask him for help'), ('b', 'Apologize and leave')]
+
+    #    SPEAK                                                                  
+    elif step == 'speak':
+        if inp == 'a':
+            wellness = clamp_wellness(wellness + 4)
+            session['cabin'] = True
+            session['grass'] = False
+            cabin = True
+            new_msgs = [
+                ('blue',  "'I need your help. Please.' You say to the man. He tilts his head at you. 'No need to worry, I'm a friend with friends.' He opens the door for you to enter. 'Do you know what that means?' he asks as he grabs a small loaf of bread and hands it to you."),
+                ('green', '+4 wellness')
+            ]
+            if not jacket and winter:
+                wellness = clamp_wellness(wellness + 3)
+                new_msgs += [('green', 'You have found shelter! You are no longer cold.'), ('green', '+3 wellness')]
+            new_msgs += [
+                ('blue', "'It means I'm here to help. You'll do good to remember that,' he says. 'You can stay a night, but you'll need to leave soon after.' You nod and thank him. You stay in a warm bed tonight."),
+                ('blue', "You awake. The man sends you off after a small breakfast and you continue your journey.")
+            ]
+            if winter:
+                next_step, prompt, choices = nav_winter_state()
+            else:
+                next_step, prompt, choices = nav_summer_state()
+
+        elif inp == 'b':
+            session['grass'] = True
+            session['cabin'] = False
+            new_msgs = [('blue', "'I'm sorry for the bother, sir.' You say, walking briskly away. You sleep in the grass field.")]
+            if winter:
+                if jacket:
+                    new_msgs.append(('blue', "Your jacket helps keep you warm, thankfully."))
+                else:
+                    wellness = clamp_wellness(wellness - 5)
+                    new_msgs += [('blue', "Without a jacket, it's extremely cold outside."), ('red', '-5 wellness.')]
+                if is_dead(wellness, new_msgs):
+                    game_over = True
+                    next_step = 'end'
+                else:
+                    next_step, prompt, choices = nav_winter_state()
+            else:
+                new_msgs += [('blue', "Suddenly, you are startled by distant footsteps and a flashlight in the dark..."), ('blue', "It's an officer and search dog!")]
+                next_step = 'searchdog'
+                prompt    = 'What do you do?'
+                choices   = [
+                    ('a', 'Cover yourself in mud to hide your scent from the dog'),
+                    ('b', 'Discreetly move away through the grass'),
+                    ('c', 'Try to speak with the officer')
+                ]
+
+    #  SEARCHDOG                                                              
+    elif step == 'searchdog':
+        if inp == 'a':
+            new_msgs  = [('blue', "You look around and notice a small patch of mud and plants. In a fit of desperation but clarity, you scoop it up onto your skin and clothes quickly, before planting yourself back hidden in the grass.")]
+            next_step = 'mud_giveup'
+            prompt    = "The dog and officer move closer. Do you surrender?"
+            choices   = [('a', 'Yes, surrender'), ('b', 'No, hold your ground')]
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness - 3)
+            new_msgs  = [
+                ('blue', "You keep your body as low in the grass as possible, shuffling along the floor as you hear them move closer. The dog begins to bark and loud footsteps trudge towards you."),
+                ('blue', "As you crawl, you scrape your hands and legs on rough wood and rocks."),
+                ('red', '-3 wellness.')
+            ]
+            if is_dead(wellness, new_msgs):
+                game_over = True
+                next_step = 'end'
+            else:
+                next_step = 'cop_choice'
+                prompt    = 'What do you do?'
+                choices   = [('a', 'Stay still'), ('b', 'Try to attack')]
+        elif inp == 'c':
+            new_msgs  = [
+                ('blue', "You stand up calmly. The officer calls out, raising his flashlight. You duck behind a tree and ponder your response."),
+                ('blue', "'Who's out there? Answer me now!' He calls.")
+            ]
+            next_step = 'lie1'
+            prompt    = 'What do you say?'
+            choices   = [('a', 'Pretend to be a free Black person'), ('b', 'Pretend to be a white person (staying hidden)')]
+
+    # MUD GIVEUP                                                          
+    elif step == 'mud_giveup':
+        if inp == 'a':
+            new_msgs  = [('red', "You panic and raise your hands before slowly standing up. The dog barks aggressively and the officer pulls a wanted poster from his coat. He takes you back to your 'owners'."), ('red', "Game over! You have been caught.")]
+            game_over = True
+            next_step = 'end'
+        elif inp == 'b':
+            new_msgs = [
+                ('green', "You hold your breath and close your eyes. Just as the dog's paws crunch sticks nearer to you, he returns to his officer. After a few minutes you can't see or hear anything else. Good job!"),
+                ('blue',  "As the officer turns to leave, you hear him greet someone at the cabin door. 'I'm a friend with friends,' the man inside replies — some kind of greeting, or perhaps a code. You make a note of it.")
+            ]
+            if summer:
+                next_step, prompt, choices = nav_summer_state()
+            else:
+                next_step, prompt, choices = nav_winter_state()
+
+    # COP CHOICE 
+    elif step == 'cop_choice':
+        if inp == 'a':
+            new_msgs = [('blue', "You hold your breath, and suddenly a loud bang is heard. When you risk peeking up, you see the door to the cabin nearby slam open.")]
+            if cabin:
+                new_msgs.append(('blue', "The man who helped you comes outside. 'Is there an issue, officer?' He asks, glancing at you discreetly. You take the chance to move further away and break into a sprint."))
+            else:
+                new_msgs += [
+                    ('blue', "A white man exits the cabin and approaches the officer. 'Is there an issue, officer?' He asks. Then, he sees you in the grass."),
+                    ('blue', "'There's no need to worry, sir,' the cop replies, 'I'm just clearing the area of escapees.' The man nods."),
+                    ('blue', "'Yes, well, I live alone out here and I can assure you there's nobody around for a while. I'm a friend with friends, I would know.' At that phrase, the man makes eye contact with you. A friend with friends... that sounds like some kind of code."),
+                    ('blue', "You take the chance to move further away and break into a sprint.")
+                ]
+            if summer:
+                next_step, prompt, choices = nav_summer_state()
+            else:
+                next_step, prompt, choices = nav_winter_state()
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness - 20)
+            new_msgs  = [
+                ('blue', "You lunge at the officer. You seem to catch him by surprise, but the dog bites your back and drags you down. The officer shoots you."),
+                ('red', '-20 wellness.')
+            ]
+            if is_dead(wellness, new_msgs):
+                game_over = True
+                next_step = 'end'
+            else:
+                new_msgs.append(('blue', "You crawl away into the dark, barely conscious. As you recover your breath against a tree, you hear the cabin man send the officer off. 'You take care now. I'm a friend with friends, remember that.' A code, perhaps. You file it away."))
+                if summer:
+                    next_step, prompt, choices = nav_summer_state()
+                else:
+                    next_step, prompt, choices = nav_winter_state()
+
+    #    LIE 1                                                                  
+    elif step == 'lie1':
+        if inp == 'a':
+            new_msgs  = [
+                ('blue', "You step aside from the tree and raise your hands. 'Everything is alright, sir. I'm just taking a walk here.' You ask, calming yourself enough to steady your voice. The officer squints at you."),
+                ('blue', "'Have I seen you around here before? You look familiar...'")
+            ]
+            next_step = 'lie2'
+            prompt    = "What do you say?"
+            choices   = [("a", "'Yes, I live around here.'"), ("b", "'No, I don't think so.'")]
+        elif inp == 'b':
+            new_msgs  = [
+                ('blue', "You stay hidden behind the tree. 'I'm just taking a stroll, officer.' You hear the cop hum in thought."),
+                ('blue', "'Now, I'm patrolling these parts for some escapees. You see any?' He steps closer."),
+                ('blue', "You sweat, 'No, sir, I haven't.' But before you can get another word out, the officer clangs something hard against your head. You're unconscious."),
+                ('red', "Game over! You have been caught.")
+            ]
+            game_over = True
+            next_step = 'end'
+
+    #    LIE 2                                                                  
+    elif step == 'lie2':
+        if inp == 'a':
+            new_msgs = [
+                ('blue', "The officer nods once. 'Yes, that sounds right. You're free, aren't you?' He calls."),
+                ('blue', "You hum, 'Yes sir, I am.' The officer wishes you goodnight."),
+                ('blue', "As he goes, a voice from the nearby cabin calls after him: 'I'm a friend with friends, officer. Safe travels.' The phrase catches your ear — it sounds almost like a signal.")
+            ]
+            if summer:
+                next_step, prompt, choices = nav_summer_state()
+            else:
+                next_step, prompt, choices = nav_winter_state()
+        elif inp == 'b':
+            new_msgs  = [
+                ('blue', f"You hum in fake-thought, 'nope, I've never seen you in my life, sir.' The officer tilts his head."),
+                ('blue', f"'Then where the hell have I seen you before? I know I have,' a flicker of recognition crosses his face, 'ah, you're {name}, there's a search out for you. You're under arrest.'"),
+                ('red', "Game over! You have been caught.")
+            ]
+            game_over = True
+            next_step = 'end'
+
+    #    NAVIGATION WINTER                                                      
+    elif step == 'navigation_winter':
+        new_msgs.append(('white', "Writer's note: Technically these 2 constellations are not visible at the same time. Let's pretend."))
+        if inp == 'a':
+            new_msgs += [
+                ('blue', "You decide to follow Cassiopeia, easily recognizable due to its 'W' shape. You know this constellation typically follows the north star."),
+                ('blue', "You are correct! You find yourself going the correct direction once you see a compass on a farmhouse. You're almost free!")
+            ]
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness - 3)
+            new_msgs += [
+                ('blue',   "You follow Canis Major, the constellation containing 'Sirius', the brightest star in the night sky."),
+                ('blue',   "Unfortunately, this constellation typically points south. By the time you remember that, you've already travelled miles in the wrong direction. You are exhausted."),
+                ('red',    '-3 wellness.')
+            ]
+        if not is_dead(wellness, new_msgs):
+            if not jacket:
+                wellness = clamp_wellness(wellness - 3)
+                new_msgs += [('blue', "You are cold without a jacket."), ('red', '-3 wellness.')]
+            if not is_dead(wellness, new_msgs):
+                next_step = 'injury'
+                prompt    = "You've tripped and gotten a harsh wound on your arm. You see a small creek with clear water and a tree with large leaves. What do you do?"
+                choices   = [('a', 'Wash the wound with the water'), ('b', 'Wrap it dry with the leaves')]
+            else:
+                game_over = True
+                next_step  = 'end'
+        else:
+            game_over = True
+            next_step  = 'end'
+
+    #    NAVIGATION SUMMER                                                      
+    elif step == 'navigation_summer':
+        new_msgs.append(('white', "Writer's note: Technically moss grows on any side of a tree, but in certain climates in the northern hemisphere it does follow a certain direction. Let's pretend."))
+        if inp == 'a':
+            new_msgs += [
+                ('blue', "You decide to walk in the direction which the moss grows along the trees. You remember this tends to be... North?"),
+                ('blue', "You are correct! You find yourself going the correct direction once you see a compass on a farmhouse. You're almost free!")
+            ]
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness - 3)
+            new_msgs += [
+                ('blue',  "You decide to walk away from the direction which the moss grows along the trees. You remember this tends to be... South?"),
+                ('blue',   "Unfortunately, this is wrong. Moss typically grows on the North side of a tree. By the time you remember that, you've already traveled miles in the wrong direction. You are exhausted."),
+                ('red',    '-3 wellness.')
+            ]
+        if is_dead(wellness, new_msgs):
+            game_over = True
+            next_step  = 'end'
+        else:
+            next_step = 'food'
+            new_msgs += code_preamble()[:0]
+            prompt    = "You're closer to escape than you are confinement, but you've used the last of your food stash. You see some small yellow flowers nearby, and a bush full of plump yellow berries. You can't recognize either. What do you eat?"
+            choices   = [('a', 'The yellow flowers'), ('b', 'The yellow berries')]
+
+    #    FOOD                                                                   
+    elif step == 'food':
+        if inp == 'a':
+            wellness = clamp_wellness(wellness + 3)
+            new_msgs = [('blue', "You pick some of the yellow flowers and bite the head off one. Good work! They were dandelions — a flower safe to consume."), ('green', '+3 wellness.')]
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness - 5)
+            new_msgs = [('blue', "You settle on the berries. As you collect them and try one, you recognize the bitter taste. They were American Bittersweets — a poisonous and invasive plant."), ('red', '-5 wellness.')]
+        if is_dead(wellness, new_msgs):
+            game_over = True
+            next_step  = 'end'
+        else:
+            new_msgs  += code_preamble()
+            next_step  = 'code'
+            prompt     = "What is the passcode?"
+            choices    = code_choices()
+
+    #    INJURY                                                                 
+    elif step == 'injury':
+        if inp == 'a':
+            wellness = clamp_wellness(wellness - 4)
+            new_msgs = [('blue', "You decide to wash your wound. You take the cold water and splash it gently, hissing at the pain. Everything seems fine until a few days later. Your wound is infected."), ('red', '-4 wellness.')]
+        elif inp == 'b':
+            wellness = clamp_wellness(wellness + 4)
+            new_msgs = [('blue', "You settle on wrapping the wound dry. Better not to risk infection from dirty water. The leaves bend around your arm and you tie it with twine."), ('green', '+4 wellness.')]
+        if is_dead(wellness, new_msgs):
+            game_over = True
+            next_step  = 'end'
+        else:
+            new_msgs  += code_preamble()
+            next_step  = 'code'
+            prompt     = "What is the passcode?"
+            choices    = code_choices()
+
+    #    CODE                                                                   
+    elif step == 'code':
+        if inp in ('a', 'b'):
+            wellness = clamp_wellness(wellness - 6)
+            new_msgs  = [
+                ('red',    "The door stays shut..."),
+                ('blue',   "You have no choice but to keep running on foot. You break into a sprint, hearing a harsh bark behind you and shouting. But are you strong enough to make it?"),
+                ('red',    '-6 wellness.')
+            ]
+            if is_dead(wellness, new_msgs):
+                game_over = True
+                next_step  = 'end'
+            else:
+                new_msgs += [
+                    ('blue',   "You push through exhaustion and finally lose the dogs and cops. You stumble, breathing heavy. You've come so far — too far to give up now. As you keep pushing forward, you see the roadmarker to Kansas State. You hide from the roadview, crawling through trees and scampering behind buildings. You don't attract any more attention and make it to the other side with ease."),
+                    ('green',  "Congratulations! You have made it to the free states.")
+                ]
+                game_over = True
+                win        = True
+                next_step  = 'win'
+        elif inp == 'c':
+            new_msgs  = [
+                ('green', "You remember what the man from the cabin said to you as the woman briskly opens the door and ushers you inside."),
+                ('blue',  "The woman whispers, 'Get in quickly!' You slip inside with several other people of color. You all are placed into a basement as an old white woman places a rug on top of the entryway. You are not caught. As you converse with these people in safety, they offer to help you reach the final stretch of escape."),
+                ('blue',  "The people pack into a wagon. They plan on using a backcountry trail to bring the group to safety. The trip takes a few days, but feels so short with the fear of getting caught and the warmth of community. Even warmer, in fact, when you safely make it to Kansas."),
+                ('green', "Congratulations! You have made it to the free states.")
+            ]
+            game_over = True
+            win        = True
+            next_step  = 'win'
+
+    #    SAVE SESSION                                                           
+    if messages and new_msgs:
+        new_msgs = [('divider', '')] + new_msgs
+    combined = messages + new_msgs
+    session['step']     = next_step
+    session['wellness'] = wellness
+    session['messages'] = combined
+
+    return render_template('game.html',
+        step=next_step,
+        messages=combined,
+        prompt=prompt,
+        input_type='text' if next_step == 'name' else 'choice',
+        choices=choices,
+        wellness=wellness,
+        game_over=game_over,
+        win=win
+    )
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
