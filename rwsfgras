@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape — A Historical Adventure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    color: #d6c9a8;
+    font-family: 'IM Fell English', Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;}
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+    max-width: 720px;}
+
+  .exit-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: transparent;
+    border: 1px solid #4a3020;
+    border-radius: 6px;
+    color: #7a6050;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: .85rem;
+    padding: .4rem .9rem;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    text-decoration: none;
+    display: inline-block;}
+
+  .exit-button:hover {
+    border-color: #9a5040;
+    color: #c07060;}
+
+  header h1 {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: 2.4rem;
+    letter-spacing: .12em;
+    color: #e8d9b0;
+    text-shadow: 0 0 18px rgba(220,190,100,.35);}
+
+  header p {
+    font-size: .9rem;
+    color: #7a6e58;
+    margin-top: .3rem;
+    letter-spacing: .06em;}
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;}
+
+  .wellness-bar {
+    background: #1a1a1a;
+    border: 1px solid #3a3228;
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    font-size: .85rem;
+    color: #9a8f76;}
+
+  .wellness-bar .label { white-space: nowrap; }
+
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: #2a2520;
+    border-radius: 4px;
+    overflow: hidden;}
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;}
+
+  .bar-fill.high   { background: #4caf50; }
+  .bar-fill.mid    { background: #ff9800; }
+  .bar-fill.low    { background: #f44336; }
+
+  .wellness-bar .num { font-weight: bold; color: #d6c9a8; }
+
+  .story-log {
+    background: #111;
+    border: 1px solid #2e2820;
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    max-height: 52vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    line-height: 1.7;
+    font-size: 1rem;}
+
+  .story-log::-webkit-scrollbar { width: 5px; }
+  .story-log::-webkit-scrollbar-track { background: #111; }
+  .story-log::-webkit-scrollbar-thumb { background: #3a3228; border-radius: 4px; }
+
+  .msg { padding: .15rem 0; }
+  .msg.blue   { color: #90caf9; }
+  .msg.green  { color: #a5d6a7; }
+  .msg.red    { color: #ef9a9a; }
+  .msg.yellow { color: #fff176; font-style: italic; font-size: .9rem; }
+  .msg.white  { color: #b0a090; font-style: italic; font-size: .9rem; }
+
+  .prompt-box {
+    background: #15130f;
+    border: 1px solid #3d3528;
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;}
+
+  .prompt-text {
+    font-size: 1.05rem;
+    color: #e8d9b0;
+    margin-bottom: 1.1rem;
+    line-height: 1.65;}
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;}
+
+  .choice-button {
+    background: #1e1a14;
+    border: 1px solid #4a4030;
+    border-radius: 7px;
+    color: #d6c9a8;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 1rem;
+    padding: .75rem 1.1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+    display: flex;
+    gap: .7rem;
+    align-items: flex-start;}
+
+  .choice-button:hover {
+    background: #2e2618;
+    border-color: #8a7450;
+    color: #f5e9c8;}
+
+  .choice-button .key {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    color: #a08050;
+    min-width: 1.2rem;}
+
+  .text-input-row {
+    display: flex;
+    gap: .6rem;}
+
+  .text-input-row input {
+    flex: 1;
+    background: #1a1610;
+    border: 1px solid #4a4030;
+    border-radius: 7px;
+    color: #e8d9b0;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 1rem;
+    padding: .7rem 1rem;
+    outline: none;
+    transition: border-color .15s;}
+
+  .text-input-row input:focus { border-color: #8a7450; }
+
+  .text-input-row button, .restart-button {
+    background: #3d2e14;
+    border: 1px solid #7a5e2a;
+    border-radius: 7px;
+    color: #e8d9b0;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 1rem;
+    padding: .7rem 1.3rem;
+    cursor: pointer;
+    transition: background .15s;}
+
+  .text-input-row button:hover, .restart-button:hover {
+    background: #5a431e;}
+
+  .end-box {
+    background: #15130f;
+    border: 1px solid #3d3528;
+    border-radius: 10px;
+    padding: 1.6rem;
+    text-align: center;}
+
+  .end-box.win  { border-color: #4a6a30; }
+  .end-box.lose { border-color: #6a2020; }
+
+  .end-box h2 {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: 1.5rem;
+    margin-bottom: .6rem;}
+
+  .end-box.win  h2 { color: #a5d6a7; }
+  .end-box.lose h2 { color: #ef9a9a; }
+
+  .end-box p { color: #9a8f76; margin-bottom: 1.2rem; font-size: .95rem; }
+
+  .restart-button { margin-top: .5rem; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #3d3228;
+    margin: .5rem 0;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Escape</h1>
+  <p>An Underground Railroad Story</p>
+  {% if step != 'name' and not game_over %}
+  <a href="/exit" class="exit-button">Exit</a>
+  {% endif %}
+</header>
+
+<div class="container">
+
+  {% if step != 'name' %}
+  <div class="wellness-bar">
+    <span class="label">Wellness</span>
+    <div class="bar-track">
+      {% set pct = (wellness / 20 * 100)|int %}
+      <div class="bar-fill {% if wellness > 12 %}high{% elif wellness > 6 %}mid{% else %}low{% endif %}"
+           style="width: {{ pct }}%"></div>
+    </div>
+    <span class="num">{{ wellness }} / 20</span>
+  </div>
+  {% endif %}
+
+  {% if messages %}
+  <div class="story-log" id="log">
+    {% for color, text in messages %}
+    {% if color == 'divider' %}
+    <hr class="divider">
+    {% else %}
+    <div class="msg {{ color }}">{{ text }}</div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if game_over %}
+    <div class="end-box {% if win %}win{% else %}lose{% endif %}">
+      {% if win %}
+        <h2>Freedom!</h2>
+        <p>You made it to the free states. Your courage and wit carried you through.</p>
+      {% else %}
+        <h2>Your Journey Ends Here</h2>
+        <p>Every choice matters. Try again — a different path awaits.</p>
+      {% endif %}
+      <a href="/"><button class="restart-button">Play Again</button></a>
+    </div>
+
+  {% elif step == 'name' %}
+    <div class="prompt-box">
+      <div class="prompt-text">What should we call you?</div>
+      <form method="POST" action="/play">
+        <div class="text-input-row">
+          <input type="text" name="input" placeholder="Enter your name..." autofocus required maxlength="40">
+          <button type="submit">Begin</button>
+        </div>
+      </form>
+    </div>
+
+  {% else %}
+    <div class="prompt-box">
+      <div class="prompt-text">{{ prompt }}</div>
+      {% if choices %}
+      <div class="choices">
+        {% for key, label in choices %}
+        <form method="POST" action="/play">
+          <input type="hidden" name="input" value="{{ key }}">
+          <button type="submit" class="choice-button">
+            <span class="key">{{ key.upper() }}.</span>
+            <span>{{ label }}</span>
+          </button>
+        </form>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  const log = document.getElementById('log');
+  if (log) log.scrollTop = log.scrollHeight;
+</script>
+</body>
+</html>
