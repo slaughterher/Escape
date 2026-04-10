@@ -66,6 +66,7 @@ while True:
 
 # CLOTHES
 if winter:
+    print(BLUE + "You pass by a housemaid collecting laundry outside a farmhouse. You also see a man sleeping on the porch with a coat over his lap. The air is only getting colder..." + RESET)
     while True:
         clothes = input("Do you steal clothes from the housemaid's basket (a), the sleeping man (b), or continue without stealing (c)? /res to quit: ")
         if clothes == "/res":
@@ -147,33 +148,32 @@ if grass:
             wellness = wellness - 5
             print(YELLOW + "Wellness = " + str(wellness) + RESET)
             check_wellness()
-    if summer:
-        print(BLUE + "Suddenly, you are startled by distant footsteps and a flashlight in the dark..." + RESET)
-        print(BLUE + "Its an officer and searchdog!" + RESET)
+    print(BLUE + "Suddenly, you are startled by distant footsteps and a flashlight in the dark..." + RESET)
+    print(BLUE + "Its an officer and searchdog!" + RESET)
 
-        # SEARCHDOG
-        while True:
-            searchdog = input("Do you cover yourself in mud to hide your scent from the dog (a), try to discreetly move away from the both of them through the grass (b), or try speak with the officer (c)? /res to quit: ")
-            if searchdog == "/res":
+    # SEARCHDOG
+    while True:
+        searchdog = input("Do you cover yourself in mud to hide your scent from the dog (a), try to discreetly move away from the both of them through the grass (b), or try speak with the officer (c)? /res to quit: ")
+        if searchdog == "/res":
                 sys.exit()
-            if searchdog == "a":
+        if searchdog == "a":
                 # MUD
-                print(BLUE + "You look around and notice a small patch of mud and plants. In a fit of desperation but clarity, you scoop it up onto your skin and clothes quickly, before planting yourself back hidden in the grass." + RESET)
-                while True:
-                    giveup = input("The dog and officer move closer. Do you surrender? Yes (a)/no (b) /res to quit: ")
-                    if giveup == "/res":
-                        sys.exit()
-                    if giveup == "a":
-                        print(RED + "You panic and raise your hands before slowly standing up. The dog barks at you aggressively and the police pulls a piece of paper from his coat. Its a wanted poster. He takes you back to your 'owners'." + RESET)
-                        print(RED + "Game over! You have been caught." + RESET)
-                        sys.exit()
-                    elif giveup == "b":
-                        print(GREEN + "You hold your breath and close your eyes, you believe in your solution. Just as the dog's paws are crunching sticks nearer to you, he returns to his officer. Some muttering from him is heard, and after a few minutes you can't see or hear anything else. Good job!" + RESET)
-                        break
-                    else:
-                        print(RED + "Please answer with a provided option." + RESET)
-                break
-            elif searchdog == "b":
+            print(BLUE + "You look around and notice a small patch of mud and plants. In a fit of desperation but clarity, you scoop it up onto your skin and clothes quickly, before planting yourself back hidden in the grass." + RESET)
+            while True:
+                giveup = input("The dog and officer move closer. Do you surrender? Yes (a)/no (b) /res to quit: ")
+                if giveup == "/res":
+                    sys.exit()
+                if giveup == "a":
+                    print(RED + "You panic and raise your hands before slowly standing up. The dog barks at you aggressively and the police pulls a piece of paper from his coat. Its a wanted poster. He takes you back to your 'owners'." + RESET)
+                    print(RED + "Game over! You have been caught." + RESET)
+                    sys.exit()
+                elif giveup == "b":
+                    print(GREEN + "You hold your breath and close your eyes, you believe in your solution. Just as the dog's paws are crunching sticks nearer to you, he returns to his officer. Some muttering from him is heard, and after a few minutes you can't see or hear anything else. Good job!" + RESET)
+                    break
+                else:
+                    print(RED + "Please answer with a provided option." + RESET)
+            break
+        elif searchdog == "b":
                 # HIDE
                 print(BLUE + "You keep your body as low in the grass as possible, shuffling along the floor as you hear them move closer. The dog begins to bark and loud footsteps are heard trudging towards you." + RESET)
                 if summer:
